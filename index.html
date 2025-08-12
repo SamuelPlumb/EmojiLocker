@@ -8,38 +8,245 @@
   <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Ctext y='1em' font-size='96'%3E%F0%9F%94%92%3C/text%3E%3C/svg%3E">
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
-    .font-emoji { font-family: system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-  </style>
-</head>
-<body class="min-h-screen bg-gradient-to-b from-white to-slate-50 antialiased">
-  <main class="max-w-3xl mx-auto p-4 md:p-10">
-    <section class="bg-white shadow-xl rounded-2xl p-4 md:p-8">
-      <header class="mb-6">
-        <h1 class="text-2xl md:text-3xl font-semibold">🔐 EmojiLocker</h1>
-        <p class="text-slate-600 mt-2">Client-side AES-GCM encryption. Share only the emoji string. Keys never leave your browser.</p>
-      </header>
+    /* Style guide variables */
+    :root {
+      --background: oklch(0.9900 0 0);
+      --foreground: oklch(0 0 0);
+      --card: oklch(1 0 0);
+      --card-foreground: oklch(0 0 0);
+      --popover: oklch(0.9900 0 0);
+      --popover-foreground: oklch(0 0 0);
+      --primary: oklch(0 0 0);
+      --primary-foreground: oklch(1 0 0);
+      --secondary: oklch(0.9400 0 0);
+      --secondary-foreground: oklch(0 0 0);
+      --muted: oklch(0.9700 0 0);
+      --muted-foreground: oklch(0.4400 0 0);
+      --accent: oklch(0.9400 0 0);
+      --accent-foreground: oklch(0 0 0);
+      --destructive: oklch(0.6300 0.1900 23.0300);
+      --destructive-foreground: oklch(1 0 0);
+      --border: oklch(0.9200 0 0);
+      --input: oklch(0.9400 0 0);
+      --ring: oklch(0 0 0);
+      --chart-1: oklch(0.8100 0.1700 75.3500);
+      --chart-2: oklch(0.5500 0.2200 264.5300);
+      --chart-3: oklch(0.7200 0 0);
+      --chart-4: oklch(0.9200 0 0);
+      --chart-5: oklch(0.5600 0 0);
+      --sidebar: oklch(0.9900 0 0);
+      --sidebar-foreground: oklch(0 0 0);
+      --sidebar-primary: oklch(0 0 0);
+      --sidebar-primary-foreground: oklch(1 0 0);
+      --sidebar-accent: oklch(0.9400 0 0);
+      --sidebar-accent-foreground: oklch(0 0 0);
+      --sidebar-border: oklch(0.9400 0 0);
+      --sidebar-ring: oklch(0 0 0);
+      --font-sans: Geist, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      --font-serif: Georgia, serif;
+      --font-mono: Geist Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --radius: 0.2rem;
+      --shadow-2xs: 0px 1px 4px -1px hsl(0 0% 0% / 0.07);
+      --shadow-xs: 0px 1px 4px -1px hsl(0 0% 0% / 0.07);
+      --shadow-sm: 0px 1px 4px -1px hsl(0 0% 0% / 0.13), 0px 1px 2px -2px hsl(0 0% 0% / 0.13);
+      --shadow: 0px 1px 4px -1px hsl(0 0% 0% / 0.13), 0px 1px 2px -2px hsl(0 0% 0% / 0.13);
+      --shadow-md: 0px 1px 4px -1px hsl(0 0% 0% / 0.13), 0px 2px 4px -2px hsl(0 0% 0% / 0.13);
+      --shadow-lg: 0px 1px 4px -1px hsl(0 0% 0% / 0.13), 0px 4px 6px -2px hsl(0 0% 0% / 0.13);
+      --shadow-xl: 0px 1px 4px -1px hsl(0 0% 0% / 0.13), 0px 8px 10px -2px hsl(0 0% 0% / 0.13);
+      --shadow-2xl: 0px 1px 4px -1px hsl(0 0% 0% / 0.33);
+      --tracking-normal: 0em;
+      --spacing: 0.25rem;
+    }
+    .dark {
+      --background: oklch(0 0 0);
+      --foreground: oklch(1 0 0);
+      --card: oklch(0.1400 0 0);
+      --card-foreground: oklch(1 0 0);
+      --popover: oklch(0.1800 0 0);
+      --popover-foreground: oklch(1 0 0);
+      --primary: oklch(1 0 0);
+      --primary-foreground: oklch(0 0 0);
+      --secondary: oklch(0.2500 0 0);
+      --secondary-foreground: oklch(1 0 0);
+      --muted: oklch(0.2300 0 0);
+      --muted-foreground: oklch(0.7200 0 0);
+      --accent: oklch(0.3200 0 0);
+      --accent-foreground: oklch(1 0 0);
+      --destructive: oklch(0.6900 0.2000 23.9100);
+      --destructive-foreground: oklch(0 0 0);
+      --border: oklch(0.2600 0 0);
+      --input: oklch(0.3200 0 0);
+      --ring: oklch(0.7200 0 0);
+      --chart-1: oklch(0.8100 0.1700 75.3500);
+      --chart-2: oklch(0.5800 0.2100 260.8400);
+      --chart-3: oklch(0.5600 0 0);
+      --chart-4: oklch(0.4400 0 0);
+      --chart-5: oklch(0.9200 0 0);
+      --sidebar: oklch(0.1800 0 0);
+      --sidebar-foreground: oklch(1 0 0);
+      --sidebar-primary: oklch(1 0 0);
+      --sidebar-primary-foreground: oklch(0 0 0);
+      --sidebar-accent: oklch(0.3200 0 0);
+      --sidebar-accent-foreground: oklch(1 0 0);
+      --sidebar-border: oklch(0.3200 0 0);
+      --sidebar-ring: oklch(0.7200 0 0);
+      --font-sans: Geist, system-ui, -apple-system, Segoe UI, Roboto, sans-serif;
+      --font-serif: Georgia, serif;
+      --font-mono: Geist Mono, ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+      --radius: 0.2rem;
+      --shadow-2xs: 0px 1px 4px -1px hsl(0 0% 0% / 0.07);
+      --shadow-xs: 0px 1px 4px -1px hsl(0 0% 0% / 0.07);
+      --shadow-sm: 0px 1px 4px -1px hsl(0 0% 0% / 0.13), 0px 1px 2px -2px hsl(0 0% 0% / 0.13);
+      --shadow: 0px 1px 4px -1px hsl(0 0% 0% / 0.13), 0px 1px 2px -2px hsl(0 0% 0% / 0.13);
+      --shadow-md: 0px 1px 4px -1px hsl(0 0% 0% / 0.13), 0px 2px 4px -2px hsl(0 0% 0% / 0.13);
+      --shadow-lg: 0px 1px 4px -1px hsl(0 0% 0% / 0.13), 0px 4px 6px -2px hsl(0 0% 0% / 0.13);
+      --shadow-xl: 0px 1px 4px -1px hsl(0 0% 0% / 0.13), 0px 8px 10px -2px hsl(0 0% 0% / 0.13);
+      --shadow-2xl: 0px 1px 4px -1px hsl(0 0% 0% / 0.33);
+    }
 
-      <!-- Key -->
-      <div class="space-y-2 mb-6">
+    /* Base */
+    html, body { height: 100%; }
+    body {
+      background: var(--background);
+      color: var(--foreground);
+      font-family: var(--font-sans);
+    }
+    .font-emoji { font-family: system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif; }
+    .mono { font-family: var(--font-mono); }
+
+    /* Components */
+    .card {
+      background: var(--card);
+      color: var(--card-foreground);
+      border: 1px solid var(--border);
+      border-radius: 0.75rem; /* Tailwind's rounded-2xl look */
+      box-shadow: none;
+      transition: box-shadow .2s ease, transform .1s ease;
+    }
+    .card:hover { box-shadow: var(--shadow-lg); }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: .5rem;
+      padding: .75rem .75rem;
+      border-radius: .5rem;
+      font-weight: 400;
+      line-height: 1;
+      border: 1px solid transparent;
+      transition: box-shadow .15s ease, transform .05s ease, background-color .15s ease, color .15s ease;
+      cursor: pointer;
+      user-select: none;
+    }
+    .btn:active { transform: translateY(1px); }
+    .btn-primary {
+      background: var(--primary);
+      color: var(--primary-foreground);
+      box-shadow: none;
+    }
+    .btn-primary:hover { box-shadow: var(--shadow-sm); }
+    .btn-secondary {
+      background: var(--secondary);
+      color: var(--secondary-foreground);
+      border-color: var(--border);
+    }
+    .btn-quiet {
+      background: var(--muted);
+      color: var(--foreground);
+      border-color: var(--border);
+    }
+
+    .field, .select, .textarea {
+      width: 100%;
+      background: var(--card);
+      color: var(--foreground);
+      border: 1px solid var(--input);
+      border-radius: .5rem;
+      padding: .5rem .75rem;
+      outline: none;
+      transition: box-shadow .15s ease, border-color .15s ease;
+    }
+    .textarea { min-height: 120px; resize: vertical; }
+    .field:focus, .select:focus, .textarea:focus {
+      border-color: var(--ring);
+      box-shadow: 0 0 0 3px color-mix(in oklab, var(--ring) 12%, transparent);
+    }
+
+    .tabs {
+      display: inline-flex;
+      background: var(--muted);
+      padding: .25rem;
+      border-radius: .75rem;
+      border: 1px solid var(--border);
+      width: 100%;
+      gap: .25rem;
+    }
+    .tab {
+      flex: 1;
+      padding: .375rem .75rem;
+      border-radius: .5rem;
+      font-size: .875rem;
+      border: 1px solid transparent;
+      background: transparent;
+    }
+    .tab.active {
+      background: var(--card);
+      color: var(--foreground);
+      box-shadow: var(--shadow-xs);
+      border-color: var(--border);
+    }
+
+    .muted { color: var(--muted-foreground); font-size: .8rem; }
+    .foot { color: var(--muted-foreground); font-size: .78rem; }
+
+    kbd {
+      border: 1px solid var(--border);
+      background: var(--muted);
+      border-bottom-width: 2px;
+      padding: .1rem .35rem;
+      border-radius: .375rem;
+      font-family: var(--font-mono);
+      font-size: .75rem;
+    }
+  
+@media (max-width: 640px) {
+  .btn-stack { flex-direction: column; }
+  .btn-stack .btn { width: 100%; }
+}
+
+</style>
+</head>
+<body class="min-h-screen antialiased">
+  <main class="max-w-3xl mx-auto p-4 md:p-10 space-y-6 md:space-y-8">
+    <!-- Header (flat on background) -->
+    <header class="pt-2">
+      <h1 class="text-2xl md:text-3xl font-semibold">🔐 EmojiLocker</h1>
+      <p class="mt-2 muted">Client-side AES-GCM encryption. Share only the emoji string. Keys never leave your browser.</p>
+    </header>
+
+    <!-- Secret Key (raised card) -->
+    <section class="card p-4 md:p-8">
+      <div class="space-y-2">
         <label for="key" class="block text-sm font-medium">Secret Key (base64, 256-bit AES)</label>
-        <div class="flex flex-col sm:flex-row gap-2">
-          <input id="key" class="w-full border rounded-md px-3 py-2 mono"
-                 placeholder="Paste or generate a key…" />
-          <div class="flex gap-2">
-            <button id="btn-gen" class="px-3 py-2 rounded-md bg-black text-white w-full">Generate</button>
-            <button id="btn-copy-key" class="px-3 py-2 rounded-md bg-slate-100 w-full">Copy</button>
+        <div class="flex flex-col sm:flex-row gap-2 btn-stack">
+          <input id="key" class="field mono" placeholder="Paste or generate a key…" />
+          <div class="flex gap-2 sm:w-auto w-full btn-stack">
+            <button id="btn-gen" class="btn btn-primary w-full sm:w-auto">Generate</button>
+            <button id="btn-copy-key" class="btn btn-secondary w-full sm:w-auto">Copy</button>
           </div>
         </div>
-        <p id="key-hint" class="text-xs text-slate-500"></p>
-        <p class="text-xs text-slate-500">Tip: share the key out-of-band (never in the same chat as the emojis). Rotate keys regularly.</p>
+        <p id="key-hint" class="muted"></p>
+        <p class="muted">Tip: share the key out-of-band (never in the same chat as the emojis). Rotate keys regularly.</p>
       </div>
+    </section>
 
-      <!-- Emoji style (stacked) -->
-      <div class="space-y-2 mb-8">
+    <!-- Emoji style + preview (raised card) -->
+    <section class="card p-4 md:p-8">
+      <div class="space-y-2">
         <div class="w-full">
           <label for="emoji-style" class="block text-sm font-medium">Emoji Style</label>
-          <select id="emoji-style" class="w-full border rounded-md px-3 py-2">
+          <select id="emoji-style" class="select">
             <option value="default">Default (mixed)</option>
             <option value="happy">Happy 🙂</option>
             <option value="angry">Angry 😠</option>
@@ -53,16 +260,19 @@
         </div>
         <div class="w-full">
           <label class="block text-sm font-medium">Alphabet Preview</label>
-          <div id="alphabet-preview" class="text-2xl font-emoji border rounded-md px-3 py-2 overflow-x-auto whitespace-nowrap" title="First 16 symbols of the current alphabet"></div>
+          <div id="alphabet-preview" class="text-2xl font-emoji field overflow-x-auto whitespace-nowrap" title="First 16 symbols of the current alphabet"></div>
         </div>
-        <p class="text-xs text-slate-500">Sender and receiver must pick the <strong>same style</strong> to decode. (We don’t embed the style in the message.)</p>
+        <p class="muted">Sender and receiver must pick the <strong>same style</strong> to decode. (We don’t embed the style in the message.)</p>
       </div>
+    </section>
 
+    <!-- Encrypt / Decrypt workspace (raised card) -->
+    <section class="card p-4 md:p-8">
       <!-- Tabs -->
       <div class="mb-6">
-        <div class="inline-flex rounded-lg bg-slate-100 p-1 w-full">
-          <button id="tab-encrypt" class="px-3 py-1 rounded-md bg-white shadow text-sm w-full">Encrypt → Emojis</button>
-          <button id="tab-decrypt" class="px-3 py-1 rounded-md text-sm w-full">Decrypt ← Emojis</button>
+        <div class="tabs">
+          <button id="tab-encrypt" class="tab active">Encrypt → Emojis</button>
+          <button id="tab-decrypt" class="tab">Decrypt ← Emojis</button>
         </div>
       </div>
 
@@ -70,18 +280,18 @@
       <div id="panel-encrypt" class="space-y-4">
         <div>
           <label for="plain" class="block text-sm font-medium">Your Message</label>
-          <textarea id="plain" class="w-full border rounded-md px-3 py-2 min-h-[120px]" placeholder="Type something secret…"></textarea>
+          <textarea id="plain" class="textarea" placeholder="Type something secret…"></textarea>
         </div>
-        <div class="flex gap-2">
-          <button id="btn-encrypt" class="px-3 py-2 rounded-md bg-black text-white w-full">Encrypt to Emojis</button>
-          <button id="btn-clear-encrypt" class="px-3 py-2 rounded-md bg-slate-100 w-full">Clear</button>
+        <div class="flex gap-2 btn-stack">
+          <button id="btn-encrypt" class="btn btn-primary w-full">Encrypt to Emojis</button>
+          <button id="btn-clear-encrypt" class="btn btn-quiet w-full">Clear</button>
         </div>
         <div>
           <label class="block text-sm font-medium">Emoji Message (share this)</label>
-          <textarea id="emoji-out" readonly class="w-full border rounded-md px-3 py-2 min-h-[140px] font-emoji"></textarea>
-          <div class="flex gap-2 mt-2">
-            <button id="btn-copy-emoji" class="px-3 py-2 rounded-md bg-slate-100 w-full">Copy Emojis</button>
-            <button id="btn-select-emoji" class="px-3 py-2 rounded-md bg-slate-100 w-full">Select All</button>
+          <textarea id="emoji-out" readonly class="textarea font-emoji min-h-[140px]"></textarea>
+          <div class="flex gap-2 mt-2 btn-stack">
+            <button id="btn-copy-emoji" class="btn btn-secondary w-full">Copy Emojis</button>
+            <button id="btn-select-emoji" class="btn btn-quiet w-full">Select All</button>
           </div>
         </div>
       </div>
@@ -90,25 +300,25 @@
       <div id="panel-decrypt" class="space-y-4 hidden">
         <div>
           <label for="emoji-in" class="block text-sm font-medium">Emoji Message</label>
-          <textarea id="emoji-in" class="w-full border rounded-md px-3 py-2 min-h-[140px]" placeholder="Paste the emoji string here…"></textarea>
-          <p id="emoji-validate" class="text-xs mt-1"></p>
+          <textarea id="emoji-in" class="textarea min-h-[140px]" placeholder="Paste the emoji string here…"></textarea>
+          <p id="emoji-validate" class="muted mt-1"></p>
         </div>
-        <div class="flex gap-2">
-          <button id="btn-decrypt" class="px-3 py-2 rounded-md bg-black text-white w-full">Decrypt Emojis</button>
-          <button id="btn-clear-decrypt" class="px-3 py-2 rounded-md bg-slate-100 w-full">Clear</button>
+        <div class="flex gap-2 btn-stack">
+          <button id="btn-decrypt" class="btn btn-primary w-full">Decrypt Emojis</button>
+          <button id="btn-clear-decrypt" class="btn btn-quiet w-full">Clear</button>
         </div>
         <div>
           <label class="block text-sm font-medium">Decrypted Message</label>
-          <textarea id="plain-out" readonly class="w-full border rounded-md px-3 py-2 min-h-[120px]"></textarea>
+          <textarea id="plain-out" readonly class="textarea"></textarea>
         </div>
       </div>
-
-      <!-- Footnotes -->
-      <footer class="pt-6 mt-6 border-t text-xs text-slate-500 space-y-2">
-        <p><strong>Security notes:</strong> AES-GCM provides confidentiality and integrity. Keys and encryption run locally in your browser. The emoji transport is just an encoding of the encrypted bytes.</p>
-        <p><strong>Compatibility:</strong> Requires a secure context (https or localhost) for Web Crypto. If Clipboard API is blocked by the host page’s policy, use “Select All” then <kbd>Ctrl/Cmd+C</kbd>.</p>
-      </footer>
     </section>
+
+    <!-- Footnotes (flat on background) -->
+    <footer class="pt-2 foot space-y-2">
+      <p><strong>Security notes:</strong> AES-GCM provides confidentiality and integrity. Keys and encryption run locally in your browser. The emoji transport is just an encoding of the encrypted bytes.</p>
+      <p><strong>Compatibility:</strong> Requires a secure context (https or localhost) for Web Crypto. If Clipboard API is blocked by the host page’s policy, use “Select All” then <kbd>Ctrl/Cmd+C</kbd>.</p>
+    </footer>
   </main>
 
   <script>
@@ -240,12 +450,14 @@
 
   async function exportKeyBase64(key) {
     const raw = await crypto.subtle.exportKey("raw", key);
-    return bufToBase64(raw);
+    return btoa(String.fromCharCode(...new Uint8Array(raw)));
   }
 
   async function importKeyBase64(b64) {
-    const raw = base64ToBuf(b64.trim());
-    return crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+    const binary = atob(b64.trim());
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return crypto.subtle.importKey("raw", bytes.buffer, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
   }
 
   function concatUint8(...parts) {
@@ -341,14 +553,14 @@
   function showEncrypt() {
     els.panelEncrypt.classList.remove("hidden");
     els.panelDecrypt.classList.add("hidden");
-    els.tabEncrypt.classList.add("bg-white", "shadow");
-    els.tabDecrypt.classList.remove("bg-white", "shadow");
+    els.tabEncrypt.classList.add("active");
+    els.tabDecrypt.classList.remove("active");
   }
   function showDecrypt() {
     els.panelEncrypt.classList.add("hidden");
     els.panelDecrypt.classList.remove("hidden");
-    els.tabDecrypt.classList.add("bg-white", "shadow");
-    els.tabEncrypt.classList.remove("bg-white", "shadow");
+    els.tabDecrypt.classList.add("active");
+    els.tabEncrypt.classList.remove("active");
   }
 
   els.tabEncrypt.addEventListener("click", showEncrypt);
@@ -367,7 +579,7 @@
     try {
       const key = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
       const raw = await crypto.subtle.exportKey("raw", key);
-      const b64 = (function bufToBase64(buf){const bytes=new Uint8Array(buf);let binary="";for(let i=0;i<bytes.length;i++)binary+=String.fromCharCode(bytes[i]);return btoa(binary);})(raw);
+      const b64 = btoa(String.fromCharCode(...new Uint8Array(raw)));
       els.key.value = b64;
       cachedKey = key;
       cachedKey.__b64 = b64;
@@ -420,10 +632,10 @@
     for (const s of symbols) if (!reverse.has(stripVS(s))) invalid++;
     if (invalid === 0 || symbols.length === 0) {
       els.emojiValidate.textContent = "";
-      els.emojiValidate.className = "text-xs mt-1";
+      els.emojiValidate.className = "muted mt-1";
     } else {
       els.emojiValidate.textContent = invalid + " invalid symbol" + (invalid > 1 ? "s" : "") + " for style “" + currentStyle + "” will be rejected.";
-      els.emojiValidate.className = "text-xs mt-1 text-amber-600";
+      els.emojiValidate.className = "muted mt-1";
     }
   });
 
@@ -464,3 +676,4 @@
   </script>
 </body>
 </html>
+
