@@ -1,0 +1,466 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>EmojiLocker — Encrypted Emoji Messenger</title>
+  <meta name="description" content="Zero-backend, client-side AES-GCM emoji messenger." />
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 128 128'%3E%3Ctext y='1em' font-size='96'%3E%F0%9F%94%92%3C/text%3E%3C/svg%3E">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    .font-emoji { font-family: system-ui, Apple Color Emoji, Segoe UI Emoji, Noto Color Emoji, sans-serif; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  </style>
+</head>
+<body class="min-h-screen bg-gradient-to-b from-white to-slate-50 antialiased">
+  <main class="max-w-3xl mx-auto p-6 md:p-10">
+    <section class="bg-white shadow-xl rounded-2xl p-6 md:p-8">
+      <header class="mb-6">
+        <h1 class="text-2xl md:text-3xl font-semibold">🔐 EmojiLocker — Encrypted Emoji Messenger</h1>
+        <p class="text-slate-600 mt-2">Client-side AES-GCM encryption. Share only the emoji string. Keys never leave your browser.</p>
+      </header>
+
+      <!-- Key -->
+      <div class="space-y-2 mb-6">
+        <label for="key" class="block text-sm font-medium">Secret Key (base64, 256-bit AES)</label>
+        <div class="flex flex-col sm:flex-row gap-2">
+          <input id="key" class="w-full border rounded-md px-3 py-2 mono"
+                 placeholder="Paste or generate a key…" />
+          <div class="flex gap-2">
+            <button id="btn-gen" class="px-3 py-2 rounded-md bg-black text-white">Generate</button>
+            <button id="btn-copy-key" class="px-3 py-2 rounded-md bg-slate-100">Copy</button>
+          </div>
+        </div>
+        <p id="key-hint" class="text-xs text-slate-500"></p>
+        <p class="text-xs text-slate-500">Tip: share the key out-of-band (never in the same chat as the emojis). Rotate keys regularly.</p>
+      </div>
+
+      <!-- Emoji style (stacked) -->
+      <div class="space-y-2 mb-8">
+        <div class="w-full">
+          <label for="emoji-style" class="block text-sm font-medium">Emoji Style</label>
+          <select id="emoji-style" class="w-full border rounded-md px-3 py-2">
+            <option value="default">Default (mixed)</option>
+            <option value="happy">Happy 🙂</option>
+            <option value="angry">Angry 😠</option>
+            <option value="celebration">Celebration 🎉</option>
+            <option value="love">Love ❤️</option>
+            <option value="nature">Nature 🌿</option>
+            <option value="food">Food 🍕</option>
+            <option value="tech">Tech 🤖</option>
+            <option value="animals">Animals 🐾</option>
+          </select>
+        </div>
+        <div class="w-full">
+          <label class="block text-sm font-medium">Alphabet Preview</label>
+          <div id="alphabet-preview" class="text-2xl font-emoji border rounded-md px-3 py-2 overflow-x-auto whitespace-nowrap" title="First 16 symbols of the current alphabet"></div>
+        </div>
+        <p class="text-xs text-slate-500">Sender and receiver must pick the <strong>same style</strong> to decode. (We don’t embed the style in the message.)</p>
+      </div>
+
+      <!-- Tabs -->
+      <div class="mb-6">
+        <div class="inline-flex rounded-lg bg-slate-100 p-1">
+          <button id="tab-encrypt" class="px-3 py-1 rounded-md bg-white shadow text-sm">Encrypt → Emojis</button>
+          <button id="tab-decrypt" class="px-3 py-1 rounded-md text-sm">Decrypt ← Emojis</button>
+        </div>
+      </div>
+
+      <!-- Encrypt panel -->
+      <div id="panel-encrypt" class="space-y-4">
+        <div>
+          <label for="plain" class="block text-sm font-medium">Your Message</label>
+          <textarea id="plain" class="w-full border rounded-md px-3 py-2 min-h-[120px]" placeholder="Type something secret…"></textarea>
+        </div>
+        <div class="flex gap-2">
+          <button id="btn-encrypt" class="px-3 py-2 rounded-md bg-black text-white">Encrypt to Emojis</button>
+          <button id="btn-clear-encrypt" class="px-3 py-2 rounded-md bg-slate-100">Clear</button>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Emoji Message (share this)</label>
+          <textarea id="emoji-out" readonly class="w-full border rounded-md px-3 py-2 min-h-[140px] font-emoji"></textarea>
+          <div class="flex gap-2 mt-2">
+            <button id="btn-copy-emoji" class="px-3 py-2 rounded-md bg-slate-100">Copy Emojis</button>
+            <button id="btn-select-emoji" class="px-3 py-2 rounded-md bg-slate-100">Select All</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Decrypt panel -->
+      <div id="panel-decrypt" class="space-y-4 hidden">
+        <div>
+          <label for="emoji-in" class="block text-sm font-medium">Emoji Message</label>
+          <textarea id="emoji-in" class="w-full border rounded-md px-3 py-2 min-h-[140px]" placeholder="Paste the emoji string here…"></textarea>
+          <p id="emoji-validate" class="text-xs mt-1"></p>
+        </div>
+        <div class="flex gap-2">
+          <button id="btn-decrypt" class="px-3 py-2 rounded-md bg-black text-white">Decrypt Emojis</button>
+          <button id="btn-clear-decrypt" class="px-3 py-2 rounded-md bg-slate-100">Clear</button>
+        </div>
+        <div>
+          <label class="block text-sm font-medium">Decrypted Message</label>
+          <textarea id="plain-out" readonly class="w-full border rounded-md px-3 py-2 min-h-[120px]"></textarea>
+        </div>
+      </div>
+
+      <!-- Footnotes -->
+      <footer class="pt-6 mt-6 border-t text-xs text-slate-500 space-y-2">
+        <p><strong>Security notes:</strong> AES-GCM provides confidentiality and integrity. Keys and encryption run locally in your browser. The emoji transport is just an encoding of the encrypted bytes.</p>
+        <p><strong>Compatibility:</strong> Requires a secure context (https or localhost) for Web Crypto. If Clipboard API is blocked by the host page’s policy, use “Select All” then <kbd>Ctrl/Cmd+C</kbd>.</p>
+      </footer>
+    </section>
+  </main>
+
+  <script>
+  const stripVS = (s) => (s || "").replace(/\uFE0F/g, "");
+  function tokenizeGraphemes(str) {
+    if ("Segmenter" in Intl) {
+      const seg = new Intl.Segmenter(undefined, { granularity: "grapheme" });
+      return Array.from(seg.segment(str), x => stripVS(x.segment));
+    }
+    return Array.from(stripVS(str));
+  }
+
+  const BASE_DEFAULT = [
+    "😀","😁","😂","😃","😄","😅","😆","😉",
+    "😊","🙂","🙃","😋","😎","😍","😘","😗",
+    "😙","😚","🤗","🤩","🤔","🤨","😐","😑",
+    "😶","🙄","😏","😣","😥","😮","😯","😫",
+    "😴","🤤","😪","😵","🤯","😱","😳","🥳",
+    "🤠","🤓","🧐","👻","💀","🤖","👾","🎉",
+    "✨","🔥","🌟","⚡","💫","🌈","🍀","🍉",
+    "🍍","🥑","🍣","🍕","🍪","🧁","🎧","🎮"
+  ].map(stripVS);
+
+  const PAD_EMOJI = stripVS("◼");
+
+  const CATEGORY_SEEDS = {
+    default: BASE_DEFAULT,
+    happy: tokenizeGraphemes("😀😁😂🤣😃😄😅😆😉😊🙂🙃😋😎😍🥳🤩🤗😺😸😹😻😽🥰"),
+    angry: tokenizeGraphemes("😠😡🤬😤😒🙄😑😣😓😫😩😾👿😾"),
+    celebration: tokenizeGraphemes("🎉🎊✨🎇🎆🥳🏆🎖️🏅🎈🎂🧁🍾🎵🎶🌟💫"),
+    love: tokenizeGraphemes("❤️🩷🧡💛💚💙💜🤎🖤🤍💕💞💘💝💖💗😍😘🥰😻💌💘"),
+    nature: tokenizeGraphemes("🌿🌱🍃🌲🌳🌼🌸🌺🌻🌞🌈🌊🌍🍀🍁🍂🍄🌾⛰️🏔️"),
+    food: tokenizeGraphemes("🍕🍔🍟🌭🍗🍖🍣🍤🍙🍚🍜🍝🍛🍲🥗🥙🌮🌯🥪🍰🍫🍪🧁🍩🍦🍨🍧"),
+    tech: tokenizeGraphemes("🤖🖥️💻⌨️🖱️📱📲📡🛰️💿📀🧠🧪🔬🔭⚙️🔧🔩🔌🔋"),
+    animals: tokenizeGraphemes("🐶🐱🐭🐹🐰🦊🐻🐼🐨🐯🦁🐮🐷🐸🐵🐔🐧🐦🐤🦆🦉🐴🦄🐝🐛🦋🐞")
+  };
+
+  function unique(arr) {
+    const seen = new Set();
+    const out = [];
+    for (const a of arr) {
+      const s = stripVS(a);
+      if (!seen.has(s)) { seen.add(s); out.push(s); }
+    }
+    return out;
+  }
+
+  function buildAlphabet(style) {
+    const seed = CATEGORY_SEEDS[style] ? CATEGORY_SEEDS[style] : BASE_DEFAULT;
+    const uniqSeed = unique(seed);
+    const pool = unique([...uniqSeed, ...BASE_DEFAULT]);
+    if (pool.length < 64) {
+      throw new Error("Alphabet too short after de-duplication.");
+    }
+    return pool.slice(0, 64);
+  }
+
+  let currentStyle = "default";
+  let EMOJI_ALPHABET = buildAlphabet(currentStyle);
+
+  function refreshPreview() {
+    const prev = document.getElementById("alphabet-preview");
+    prev.textContent = EMOJI_ALPHABET.slice(0, 16).join("");
+  }
+
+  function bytesToEmoji(bytes) {
+    let bitStr = "";
+    for (let i = 0; i < bytes.length; i++) {
+      bitStr += bytes[i].toString(2).padStart(8, "0");
+    }
+    const chunks = bitStr.match(/.{1,6}/g) || [];
+    if (chunks.length && chunks[chunks.length - 1].length !== 6) {
+      chunks[chunks.length - 1] = chunks[chunks.length - 1].padEnd(6, "0");
+    }
+    let out = chunks.map(c => EMOJI_ALPHABET[parseInt(c, 2)]).join("");
+    const mod = out.length % 4;
+    if (mod !== 0) out += PAD_EMOJI.repeat(4 - mod);
+    return out;
+  }
+
+  function emojiToBytes(emojiStr) {
+    const clean = (emojiStr || "").replace(/\s+/g, "");
+    const noPad = clean.replaceAll(PAD_EMOJI, "");
+    const reverse = new Map(EMOJI_ALPHABET.map((e, i) => [e, i]));
+
+    const symbols = tokenizeGraphemes(noPad);
+    let invalid = [];
+    let bitStr = "";
+    for (const symRaw of symbols) {
+      const sym = stripVS(symRaw);
+      if (!reverse.has(sym)) {
+        invalid.push(symRaw);
+        continue;
+      }
+      bitStr += reverse.get(sym).toString(2).padStart(6, "0");
+    }
+    if (invalid.length > 0) {
+      const uniq = [...new Set(invalid)];
+      const sample = uniq.slice(0, 10).join(" ");
+      const more = uniq.length > 10 ? "…" : "";
+      throw new Error("Invalid emoji in message for current style (“" + currentStyle + "”). Unexpected: " + sample + more);
+    }
+
+    const bytes = [];
+    for (let i = 0; i + 8 <= bitStr.length; i += 8) {
+      bytes.push(parseInt(bitStr.slice(i, i + 8), 2));
+    }
+    return new Uint8Array(bytes);
+  }
+
+  function bufToBase64(buf) {
+    const bytes = new Uint8Array(buf);
+    let binary = "";
+    for (let i = 0; i < bytes.length; i++) binary += String.fromCharCode(bytes[i]);
+    return btoa(binary);
+  }
+
+  function base64ToBuf(b64) {
+    const binary = atob(b64);
+    const bytes = new Uint8Array(binary.length);
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+    return bytes.buffer;
+  }
+
+  async function generateAesKey() {
+    const key = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
+    return key;
+  }
+
+  async function exportKeyBase64(key) {
+    const raw = await crypto.subtle.exportKey("raw", key);
+    return bufToBase64(raw);
+  }
+
+  async function importKeyBase64(b64) {
+    const raw = base64ToBuf(b64.trim());
+    return crypto.subtle.importKey("raw", raw, { name: "AES-GCM" }, false, ["encrypt", "decrypt"]);
+  }
+
+  function concatUint8(...parts) {
+    const total = parts.reduce((n, p) => n + p.length, 0);
+    const out = new Uint8Array(total);
+    let off = 0;
+    for (const p of parts) { out.set(p, off); off += p.length; }
+    return out;
+  }
+
+  async function encryptEmojiMessage(plaintext, key) {
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const enc = new TextEncoder().encode(plaintext);
+    const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc);
+    const bundled = concatUint8(iv, new Uint8Array(ct));
+    return bytesToEmoji(bundled);
+  }
+
+  async function decryptEmojiMessage(emojiStr, key) {
+    const bundled = emojiToBytes(emojiStr);
+    if (bundled.length < 12) throw new Error("Message too short.");
+    const iv = bundled.slice(0, 12);
+    const data = bundled.slice(12);
+    const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+    return new TextDecoder().decode(pt);
+  }
+
+  async function copyText(text) {
+    try {
+      if (!text) return;
+      if (navigator.clipboard && window.isSecureContext) {
+        await navigator.clipboard.writeText(text);
+        return true;
+      }
+      const ta = document.createElement("textarea");
+      ta.value = text;
+      ta.setAttribute("readonly", "");
+      ta.style.position = "fixed";
+      ta.style.top = "-9999px";
+      document.body.appendChild(ta);
+      ta.select();
+      const ok = document.execCommand("copy");
+      document.body.removeChild(ta);
+      return ok;
+    } catch (e) {
+      return false;
+    }
+  }
+
+  const els = {
+    key: document.getElementById("key"),
+    keyHint: document.getElementById("key-hint"),
+    btnGen: document.getElementById("btn-gen"),
+    btnCopyKey: document.getElementById("btn-copy-key"),
+    tabEncrypt: document.getElementById("tab-encrypt"),
+    tabDecrypt: document.getElementById("tab-decrypt"),
+    panelEncrypt: document.getElementById("panel-encrypt"),
+    panelDecrypt: document.getElementById("panel-decrypt"),
+    plain: document.getElementById("plain"),
+    emojiOut: document.getElementById("emoji-out"),
+    btnEncrypt: document.getElementById("btn-encrypt"),
+    btnClearEncrypt: document.getElementById("btn-clear-encrypt"),
+    btnCopyEmoji: document.getElementById("btn-copy-emoji"),
+    btnSelectEmoji: document.getElementById("btn-select-emoji"),
+    emojiIn: document.getElementById("emoji-in"),
+    emojiValidate: document.getElementById("emoji-validate"),
+    btnDecrypt: document.getElementById("btn-decrypt"),
+    btnClearDecrypt: document.getElementById("btn-clear-decrypt"),
+    plainOut: document.getElementById("plain-out"),
+    emojiStyle: document.getElementById("emoji-style"),
+    alphabetPreview: document.getElementById("alphabet-preview"),
+  };
+
+  let cachedKey = null;
+
+  function hasKey() {
+    return (els.key.value || "").trim().length > 0;
+  }
+
+  async function getKeyInternal() {
+    if (!hasKey()) throw new Error("Provide a key first.");
+    try {
+      if (!cachedKey || cachedKey.__b64 !== els.key.value.trim()) {
+        cachedKey = await importKeyBase64(els.key.value);
+        cachedKey.__b64 = els.key.value.trim();
+      }
+      return cachedKey;
+    } catch (e) {
+      throw new Error("Invalid key format. Paste the base64 key generated here.");
+    }
+  }
+
+  function showEncrypt() {
+    els.panelEncrypt.classList.remove("hidden");
+    els.panelDecrypt.classList.add("hidden");
+    els.tabEncrypt.classList.add("bg-white", "shadow");
+    els.tabDecrypt.classList.remove("bg-white", "shadow");
+  }
+  function showDecrypt() {
+    els.panelEncrypt.classList.add("hidden");
+    els.panelDecrypt.classList.remove("hidden");
+    els.tabDecrypt.classList.add("bg-white", "shadow");
+    els.tabEncrypt.classList.remove("bg-white", "shadow");
+  }
+
+  els.tabEncrypt.addEventListener("click", showEncrypt);
+  els.tabDecrypt.addEventListener("click", showDecrypt);
+
+  function setStyle(style) {
+    currentStyle = style;
+    EMOJI_ALPHABET = buildAlphabet(style);
+    refreshPreview();
+    els.emojiIn.dispatchEvent(new Event("input"));
+  }
+  els.emojiStyle.addEventListener("change", (e) => setStyle(e.target.value));
+
+  els.btnGen.addEventListener("click", async () => {
+    els.keyHint.textContent = "Generating…";
+    try {
+      const key = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
+      const raw = await crypto.subtle.exportKey("raw", key);
+      const b64 = (function bufToBase64(buf){const bytes=new Uint8Array(buf);let binary="";for(let i=0;i<bytes.length;i++)binary+=String.fromCharCode(bytes[i]);return btoa(binary);})(raw);
+      els.key.value = b64;
+      cachedKey = key;
+      cachedKey.__b64 = b64;
+      els.keyHint.textContent = "New 256-bit key generated. Keep it secret.";
+    } catch (e) {
+      els.keyHint.textContent = "Failed to generate key: " + (e && e.message ? e.message : e);
+    }
+  });
+
+  els.btnCopyKey.addEventListener("click", async () => {
+    const ok = await copyText(els.key.value);
+    els.keyHint.textContent = ok ? "Key copied." : "Copy blocked. Use Select All + Ctrl/Cmd+C.";
+  });
+
+  els.btnEncrypt.addEventListener("click", async () => {
+    els.emojiOut.value = "";
+    if (els.plainOut) els.plainOut.value = "";
+    try {
+      const key = await getKeyInternal();
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const enc = new TextEncoder().encode(els.plain.value);
+      const ct = await crypto.subtle.encrypt({ name: "AES-GCM", iv }, key, enc);
+      const bundled = (function concatUint8(){const parts=[iv,new Uint8Array(ct)];const total=parts.reduce((n,p)=>n+p.length,0);const out=new Uint8Array(total);let off=0;for(const p of parts){out.set(p,off);off+=p.length}return out;})();
+      els.emojiOut.value = (function bytesToEmoji(bytes){let bitStr="";for(let i=0;i<bytes.length;i++){bitStr+=bytes[i].toString(2).padStart(8,"0")}const chunks=bitStr.match(/.{1,6}/g)||[];if(chunks.length&&chunks[chunks.length-1].length!==6){chunks[chunks.length-1]=chunks[chunks.length-1].padEnd(6,"0")}let out=chunks.map(c=>EMOJI_ALPHABET[parseInt(c,2)]).join("");const mod=out.length%4;if(mod!==0) out+=PAD_EMOJI.repeat(4-mod);return out;})(bundled);
+    } catch (e) {
+      els.emojiOut.value = "ERROR: " + (e && e.message ? e.message : e);
+    }
+  });
+
+  els.btnClearEncrypt.addEventListener("click", () => {
+    els.plain.value = "";
+    els.emojiOut.value = "";
+  });
+
+  els.btnCopyEmoji.addEventListener("click", async () => {
+    const ok = await copyText(els.emojiOut.value);
+    els.keyHint.textContent = ok ? "Emoji message copied." : "Copy blocked. Use Select All + Ctrl/Cmd+C.";
+  });
+
+  els.btnSelectEmoji.addEventListener("click", () => {
+    els.emojiOut.focus();
+    els.emojiOut.select();
+  });
+
+  els.emojiIn.addEventListener("input", () => {
+    const clean = (els.emojiIn.value || "").replace(/\s+/g, "").replaceAll(PAD_EMOJI, "");
+    const symbols = tokenizeGraphemes(clean);
+    const reverse = new Map(EMOJI_ALPHABET.map((e, i) => [e, i]));
+    let invalid = 0;
+    for (const s of symbols) if (!reverse.has(stripVS(s))) invalid++;
+    if (invalid === 0 || symbols.length === 0) {
+      els.emojiValidate.textContent = "";
+      els.emojiValidate.className = "text-xs mt-1";
+    } else {
+      els.emojiValidate.textContent = invalid + " invalid symbol" + (invalid > 1 ? "s" : "") + " for style “" + currentStyle + "” will be rejected.";
+      els.emojiValidate.className = "text-xs mt-1 text-amber-600";
+    }
+  });
+
+  els.btnDecrypt.addEventListener("click", async () => {
+    els.emojiOut.value = "";
+    els.plainOut.value = "";
+    try {
+      const key = await getKeyInternal();
+      // decode
+      const clean = (els.emojiIn.value || "").replace(/\s+/g, "").replaceAll(PAD_EMOJI, "");
+      const reverse = new Map(EMOJI_ALPHABET.map((e, i) => [e, i]));
+      const symbols = tokenizeGraphemes(clean);
+      let bitStr = "";
+      for (const symRaw of symbols) {
+        const sym = stripVS(symRaw);
+        if (!reverse.has(sym)) throw new Error("Invalid emoji in message for current style.");
+        bitStr += reverse.get(sym).toString(2).padStart(6, "0");
+      }
+      const bytes = [];
+      for (let i = 0; i + 8 <= bitStr.length; i += 8) {
+        bytes.push(parseInt(bitStr.slice(i, i + 8), 2));
+      }
+      const bundled = new Uint8Array(bytes);
+      if (bundled.length < 12) throw new Error("Message too short.");
+      const iv = bundled.slice(0, 12);
+      const data = bundled.slice(12);
+      const pt = await crypto.subtle.decrypt({ name: "AES-GCM", iv }, key, data);
+      els.plainOut.value = new TextDecoder().decode(pt);
+    } catch (e) {
+      els.plainOut.value = "ERROR: " + (e && e.message ? e.message : e);
+    }
+  });
+
+  // Init
+  setStyle("default");
+  showEncrypt();
+  refreshPreview();
+  </script>
+</body>
+</html>
